@@ -1,0 +1,96 @@
+<!--
+  Last 7 calendar days from main.js, index 0 = today:
+  dayAccl = heat acclimation at the end of the day (0-100 % of full acclimation to 35 C),
+  dayDose = heat dose of that day's workouts (100 = one full heat-acclimation session).
+  One column per day, oldest on the left: the coloured bar and number are the
+  acclimation, the square under the axis grows with the day's heat dose.
+-->
+<uiView
+  onLoad="
+    var accl = [0, 0, 0, 0, 0, 0, 0];
+    var dose = [0, 0, 0, 0, 0, 0, 0];
+    var pending = 0;
+
+    var received = function () {
+      if (--pending === 0) control('#chart', 'REFRESH');
+    };
+    var fetchDay = function (k) {
+      $.get('/Zapp/{zapp_index}/Output/dayAccl' + k, function (v) { accl[k] = v; received(); });
+      $.get('/Zapp/{zapp_index}/Output/dayDose' + k, function (v) { dose[k] = v; received(); });
+    };
+    var refresh = function () {
+      pending = 14;
+      for (var k = 0; k < 7; k++) fetchDay(k);
+    };
+
+    function drawChart(ctx) {
+      var fg = getStyle('css:.cm-bgc', 'color') || '#FFF';
+      var mid = getStyle('css:.cm-mid', 'color') || '#666';
+      var hot = getStyle('css:.c-orange', 'color') || '#FA0';
+      var font = Math.round(ctx.height / 8);
+      var slot = ctx.width / 7;
+      var bar = slot * 0.6;
+      var label = font + 4;
+      var dots = slot * 0.5;
+      var axis = ctx.height - dots - 4;
+      var chart = axis - label;
+
+      ctx.font = font + 'px monospace numbers';
+      ctx.fillStyle = mid;
+      ctx.fillRect(0, axis - 2, ctx.width, 2);
+
+      for (var i = 0; i < 7; i++) {
+        var k = 6 - i;
+        var x = i * slot + (slot - bar) / 2;
+        var s = accl[k] > 0 ? accl[k] : 0;
+        var h = Math.max(2, chart * s / 100);
+        ctx.fillStyle = s < 40 ? (getStyle('css:.c-red', 'color') || '#F33') :
+          (s < 75 ? (getStyle('css:.c-orange', 'color') || '#FA0') : (getStyle('css:.c-green', 'color') || '#1D5'));
+        ctx.fillRect(x, axis - 2 - h, bar, h);
+
+        var text = '' + s;
+        ctx.fillStyle = fg;
+        ctx.fillText(text, x + (bar - ctx.measureText(text).width) / 2, axis - 2 - h - label);
+
+        if (dose[k] > 0) {
+          var d = Math.max(3, dots * Math.min(150, dose[k]) / 150);
+          ctx.fillStyle = hot;
+          ctx.fillRect(i * slot + (slot - d) / 2, axis + 2, d, d);
+        }
+      }
+    }
+  "
+  onActivate="
+    refresh();
+    setInterval(refresh, 10000);
+  ">
+
+  <div id="suuntoplus">
+
+    <!-- Topmost: title field -->
+    <div class="cm-fg" style="width:100%;height:17%;">
+      <div class="sp-t-s p-hc" style="top:calc(64% - 50%e);">Last 7 days</div>
+    </div>
+
+    <object id="chart" type="canvas" build="ctx => drawChart(ctx)"
+            style="position:absolute; left:15%; width:70%; top:23%; height:58%;" />
+
+    <div class="cm-mid sp-t-s p-hc" style="top:calc(87% - 50%e);">Acclimation % / heat dose</div>
+
+    <!-- Lower button returns to the score view (t.html) -->
+    <:if test="{{ IS_NG3 }}">
+      <div class="btn btn-btm">
+        <img class="cm-bgc icon" src="hint-btn-bottom.png" />
+      </div>
+    </:if>
+    <:else>
+      <img class="btn-btmMask" src="a-sel-d.png" />
+    </:else>
+
+    <userInput>
+      <pushButton name="down" onClick="$.put('/Zapp/{zapp_index}/Event', 1, null, 'int32');" />
+    </userInput>
+
+  </div>
+
+</uiView>

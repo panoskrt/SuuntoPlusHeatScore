@@ -1,0 +1,41 @@
+{
+  "name": "HeatAccli",
+  "version": "1.0",
+  "author": "Panagiotis Kritikakos",
+  "description": "Heat acclimatization score",
+  "type": "feature",
+  "usage": "workout",
+  "modificationTime": 1795714305,
+  "in": [
+    { "name": "Time", "source": "Dev/Time", "type": "subscribe" },
+    { "name": "State", "source": "Activity/Exercise/State", "type": "subscribe" },
+    { "name": "HeartRate", "source": "Activity/Move/-1/HeartRate/Current", "type": "subscribe" },
+    { "name": "Speed", "source": "Activity/Move/-1/Speed/Current", "type": "subscribe" },
+    { "name": "Power", "source": "Activity/Move/-1/Power/Current", "type": "subscribe" },
+    { "name": "Temperature", "source": "Activity/Move/-1/Temperature/Current", "type": "subscribe" },
+    { "name": "Altitude", "source": "Fusion/Altitude", "type": "subscribe" }
+  ],
+  "out": [
+    { "name": "score" },
+    { "name": "adaptedTemp" },
+    { "name": "apparentTemp" },
+    { "name": "coreTemp" },
+    { "name": "strain" },
+    { "name": "status" },
+    { "name": "dayAccl0" },
+    { "name": "dayAccl1" },
+    { "name": "dayAccl2" },
+    { "name": "dayAccl3" },
+    { "name": "dayAccl4" },
+    { "name": "dayAccl5" },
+    { "name": "dayAccl6" },
+    { "name": "dayDose0" },
+    { "name": "dayDose1" },
+    { "name": "dayDose2" },
+    { "name": "dayDose3" },
+    { "name": "dayDose4" },
+    { "name": "dayDose5" },
+    { "name": "dayDose6" }
+  ],
+  "template": [{ "name": "t.html" }, { "name": "g.html" }, { "name": "a.html" }]
+}

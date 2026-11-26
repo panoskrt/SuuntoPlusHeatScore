@@ -1,0 +1,88 @@
+<uiView
+  onLoad="
+    var score = -1;
+    var refreshBar = function () {
+      $.get('/Zapp/{zapp_index}/Output/score', function (v) { score = v; control('#bar', 'REFRESH'); });
+    };
+
+    function drawBar(ctx) {
+      var h = ctx.height;
+      ctx.fillStyle = getStyle('css:.cm-mid', 'color') || '#666';
+      ctx.fillRect(0, 0, ctx.width, h);
+      if (!(score >= 0)) return;
+      ctx.fillStyle = score < 40 ? (getStyle('css:.c-red', 'color') || '#F33') :
+        (score < 75 ? (getStyle('css:.c-orange', 'color') || '#FA0') : (getStyle('css:.c-green', 'color') || '#1D5'));
+      ctx.fillRect(0, 0, ctx.width * Math.min(100, score) / 100, h);
+    }
+  "
+  onActivate="
+    refreshBar();
+    setInterval(refreshBar, 5000);
+  ">
+
+  <div id="suuntoplus">
+
+    <!-- Topmost: title field -->
+    <div class="cm-fg" style="width:100%;height:17%;">
+      <div class="sp-t-s p-hc" style="top:calc(64% - 50%e);">HeatAccli</div>
+    </div>
+
+    <!-- Left: apparent ("feels like") temperature used for the score -->
+    <div class="cm-mid sp-t-s" style="top:calc(33% - 100%e);left:calc(26% - 50%e);">Feels like</div>
+    <div class="sp-vertical-center" style="top:calc(54% - 100%e);left:calc(26% - 50%e);">
+      <span class="sp-d-m f-num"><eval input="/Zapp/{zapp_index}/Output/apparentTemp" outputFormat="Temperature_Fourdigits" default="--" /></span>
+      <span class="sp-t-s"><postfix /></span>
+    </div>
+
+    <!-- Right: score, 0-100 share of the step from 22 C to the current feels-like covered by the adapted temperature -->
+    <div class="cm-mid sp-t-s" optional style="top:calc(33% - 100%e);left:calc(74% - 50%e);">Score</div>
+    <div class="sp-d-m f-num" style="top:calc(54% - 100%e);left:calc(74% - 50%e);">
+      <eval input="/Zapp/{zapp_index}/Output/score" outputFormat="Count_Fourdigits" default="--" />
+    </div>
+
+    <!-- Score bar: filled share = score, coloured like the status thresholds -->
+    <object id="bar" type="canvas" build="ctx => drawBar(ctx)"
+            style="position:absolute; left:20%; width:60%; top:58%; height:3%;" />
+
+    <!-- Status line.
+         status: 0 = no heat stress, 1 = not acclimatized, 2 = acclimatizing, 3 = acclimatized,
+         4-6 = caution, 7 = no temperature data.
+         No square brackets in the script: "[word]" is a translation token in format strings. -->
+    <div class="sp-t-s p-tc p-hc" style="top:calc(68% - 50%e);width:75%;max-height:60px;">
+      <eval input="/Zapp/{zapp_index}/Output/status" outputFormat="script x => (x === 1 ? 'Not acclimatized' : x === 2 ? 'Acclimatizing' : x === 3 ? 'Acclimatized' : x === 4 ? 'Caution: high heat strain' : x === 5 ? 'Caution: extreme heat' : x === 6 ? 'Caution: poor heat recovery' : x === 7 ? 'No temperature data' : 'No heat stress')" default="--" />
+    </div>
+
+    <!-- Adapted temperature: the feels-like temperature the body is adapted to -->
+    <div class="cm-mid sp-vertical-center p-hc" style="top:77%;">
+      <span class="sp-t-s" style="padding-right:5px;">Adapted to</span>
+      <span class="sp-t-s"><eval input="/Zapp/{zapp_index}/Output/adaptedTemp" outputFormat="Temperature_Fourdigits" default="--" /></span>
+      <span class="sp-t-s"><postfix /></span>
+    </div>
+
+    <!-- Live heat strain (PSI 0-10) and estimated core temperature -->
+    <div class="cm-mid sp-vertical-center p-hc" style="top:86%;">
+      <span class="sp-t-s" style="padding-right:5px;">Strain</span>
+      <span class="sp-t-s" style="padding-right:8px;"><eval input="/Zapp/{zapp_index}/Output/strain" outputFormat="OneDecimal_Fourdigits" default="--" /></span>
+      <span class="sp-t-s" style="padding-right:5px;">Core</span>
+      <!-- Estimated core temperature, already in the user's unit (C or F) -->
+      <span class="sp-t-s"><eval input="/Zapp/{zapp_index}/Output/coreTemp" outputFormat="OneDecimal_Fourdigits" default="--" /></span>
+      <span class="sp-t-s">°</span>
+    </div>
+
+    <!-- Lower button opens the last 7 days graph (g.html) -->
+    <:if test="{{ IS_NG3 }}">
+      <div class="btn btn-btm">
+        <img class="cm-bgc icon" src="hint-btn-bottom.png" />
+      </div>
+    </:if>
+    <:else>
+      <img class="btn-btmMask" src="a-sel-d.png" />
+    </:else>
+
+    <userInput>
+      <pushButton name="down" onClick="$.put('/Zapp/{zapp_index}/Event', 2, null, 'int32');" />
+    </userInput>
+
+  </div>
+
+</uiView>

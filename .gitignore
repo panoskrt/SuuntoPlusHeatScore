@@ -1,0 +1,5 @@
+# SuuntoPlus build output (one package per display, e.g. heatac01-q.fea)
+*.fea
+
+# macOS
+.DS_Store
